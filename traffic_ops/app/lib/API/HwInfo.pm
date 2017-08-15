@@ -122,4 +122,119 @@ sub data {
 	$self->render( json => \%data );
 }
 
+sub update {
+        my $self   = shift;
+        my $params = $self->req->json;
+
+        if ( !&is_oper($self) ) {
+                return $self->forbidden();
+        }
+
+        my $hwinfo = $self->db->resultset('Hwinfo')->find( { serverid => $params->{serverid} } );
+        if ( !defined($hwinfo) ) {
+                return $self->not_found();
+        }
+
+        if ( !defined($params) ) {
+                return $self->alert("parameters must be in JSON format.");
+        }
+
+        if ( !defined( $params->{description} ) ) {
+                return $self->alert("Description is required.");
+        }
+
+        my $values = { val => $params->{val} };
+
+        my $rs = $hwinfo->update($values);
+        if ($rs) {
+                my $response;
+                $response->{serverid}    = $rs->serverid;
+                $response->{description} = $rs->description;
+                $response->{val}         = $rs->val;
+                $response->{lastUpdated} = $rs->last_updated;
+                &log( $self, "Updated Description '" . $rs->description . "' for id: " . $rs->serverid, "APICHANGE" );
+                return $self->success( $response, "Hardware update was successful." );
+        }
+        else {
+                return $self->alert("Hardware update failed.");
+        }
+
+}
+
+sub create {
+        my $self   = shift;
+        my $params = $self->req->json;
+        if ( !defined($params) ) {
+                return $self->alert("parameters must be in JSON format,  please check!");
+        }
+
+        if ( !&is_oper($self) ) {
+                return $self->alert( { Error => " - You must be an ADMIN or OPER to perform this operation!" } );
+        }
+
+        my $description = $params->{description};
+        my $serverid    = $params->{serverid};
+        if ( !defined($description) || !defined($serverid) ) {
+                return $self->alert("hwinfo 'description' and/or 'serverid' is not given.");
+        }
+
+        # Check for duplicate serverid/description name
+        my $existing_hwinfo = $self->db->resultset('Hwinfo')->search( {  -and => ['serverid' => $serverid, 'description' => $description ] })->single();
+        if ($existing_hwinfo) {
+                return $self->alert("A serverid \"$serverid\" and description \"$description\" already exists.");
+        }
+
+        my $values = {
+                serverid        => $params->{serverid} ,
+                description     => $params->{description} ,
+                val             => $params->{val}
+        };
+
+        my $insert = $self->db->resultset('Hwinfo')->create($values);
+        my $rs = $insert->insert();
+
+        # TODO, add hostname
+        if ($rs) {
+                my $response;
+                $response->{serverid}           = $rs->serverid;
+                $response->{description}        = $rs->description;
+                $response->{val}                = $rs->val;
+                $response->{lastUpdated}        = $rs->last_updated;
+
+                &log( $self, "Created hardware info name '" . $rs->description . "' for id: " . $rs->serverid, "APICHANGE" );
+
+                return $self->success( $response, "Hardware Info create was successful." );
+        }
+        else {
+                return $self->alert("Hardware Info create failed.");
+        }
+}
+
+sub delete {
+        my $self = shift;
+        my $params = $self->req->json;
+
+        if ( !defined($params) ) {
+                return $self->alert("parameters must be in JSON format,  please check!");
+        }
+
+        if ( !&is_oper($self) ) {
+                return $self->forbidden();
+        }
+
+        my $hwinfo = $self->db->resultset('Hwinfo')->find( { serverid => $params->{serverid} } );
+        if ( !defined($hwinfo) ) {
+                return $self->not_found();
+        }
+
+        my $rs = $hwinfo->delete();
+        if ($rs) {
+                return $self->success_message("Hardware Info for server" . $params->{serverid} . " deleted.");
+        } else {
+                return $self->alert( "Hardware Info delete failed." );
+        }
+}
+
+
+
 1;
