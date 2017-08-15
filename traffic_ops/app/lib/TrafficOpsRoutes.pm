@@ -608,8 +608,8 @@ sub api_routes {
 	# Supports: ?orderby=key
 	$r->get("/api/$version/hwinfo/dtdata")->over( authenticated => 1, not_ldap => 1 )->to( 'HwInfo#data', namespace => $namespace );
 	$r->get("/api/$version/hwinfo")->over( authenticated => 1, not_ldap => 1 )->to( 'HwInfo#index', namespace => $namespace );
-        $r->post("/api/$version/hwinfo")->over( authenticated => 1, not_ldap => 1 )->to( 'HwInfo#update', namespace => $namespace );
-        $r->put("/api/$version/hwinfo")->over( authenticated => 1, not_ldap => 1 )->to( 'HwInfo#create', namespace => $namespace );
+        $r->post("/api/$version/hwinfo")->over( authenticated => 1, not_ldap => 1 )->to( 'HwInfo#create', namespace => $namespace );
+        $r->put("/api/$version/hwinfo")->over( authenticated => 1, not_ldap => 1 )->to( 'HwInfo#update', namespace => $namespace );
         $r->delete("/api/$version/hwinfo")->over( authenticated => 1, not_ldap => 1 )->to( 'HwInfo#delete', namespace => $namespace );
 
 	# -- JOBS (CURRENTLY LIMITED TO INVALIDATE CONTENT (PURGE) JOBS)
