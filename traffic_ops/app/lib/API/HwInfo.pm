@@ -152,8 +152,8 @@ sub update {
                 $response->{description} = $rs->description;
                 $response->{val}         = $rs->val;
                 $response->{lastUpdated} = $rs->last_updated;
-                &log( $self, "Updated Description '" . $rs->description . "' for id: " . $rs->serverid, "APICHANGE" );
-                return $self->success( $response, "Hardware update was successful." );
+                &log( $self, "Updated Description '" . $description . "' for id: " . $serverid, "APICHANGE" );
+                return $self->success( $response, "Hardware Info update was successful." );
         }
         else {
                 return $self->alert("Hardware update failed.");

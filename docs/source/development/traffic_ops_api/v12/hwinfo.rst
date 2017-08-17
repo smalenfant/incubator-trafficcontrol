@@ -1,17 +1,17 @@
-.. 
-.. 
+..
+..
 .. Licensed under the Apache License, Version 2.0 (the "License");
 .. you may not use this file except in compliance with the License.
 .. You may obtain a copy of the License at
-.. 
+..
 ..     http://www.apache.org/licenses/LICENSE-2.0
-.. 
+..
 .. Unless required by applicable law or agreed to in writing, software
 .. distributed under the License is distributed on an "AS IS" BASIS,
 .. WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 .. See the License for the specific language governing permissions and
 .. limitations under the License.
-.. 
+..
 
 
 .. _to-api-v12-hwinfo:
@@ -24,7 +24,7 @@ Hardware Info
 /api/1.2/hwinfo
 +++++++++++++++
 
-**GET /api/1.2/hwinfo.json**
+**GET /api/1.2/hwinfo**
 
   Authentication Required: Yes
 
@@ -51,13 +51,13 @@ Hardware Info
     {
      "response": [
         {
-           "serverId": "odol-atsmid-cen-09",
+           "serverId": 1,
            "lastUpdated": "2014-05-27 09:06:02",
            "val": "D1S4",
            "description": "Physical Disk 0:1:0"
         },
         {
-           "serverId": "odol-atsmid-cen-09",
+           "serverId": 2,
            "lastUpdated": "2014-05-27 09:06:02",
            "val": "D1S4",
            "description": "Physical Disk 0:1:1"
@@ -65,4 +65,61 @@ Hardware Info
      ]
     }
 
+**PUT /api/1.2/hwinfo**
+
+      Update Hardware Information
+
+      Authentication Required: Yes
+
+      Role(s) Required: None
+
+      **Request Properties**
+
+      +--------------------+--------+----------------------------------------------------------------------+
+      | Parameter          | Type   | Description                                                          |
+      +====================+========+======================================================================+
+      | ``serverId``       | int    | Local unique identifier for this specific server's hardware info     |
+      +--------------------+--------+----------------------------------------------------------------------+
+      | ``description``    | string | Freeform description for this specific server's hardware info        |
+      +--------------------+--------+----------------------------------------------------------------------+
+      | ``val``            | string | Freeform value used to track anything about a server's hardware info |
+      +--------------------+--------+----------------------------------------------------------------------+
+
+      **Request Example** ::
+
+        {
+         "response": [
+            {
+               "serverId": "odol-atsmid-cen-09",
+               "lastUpdated": "2014-05-27 09:06:02",
+               "val": "D1S4",
+               "description": "Physical Disk 0:1:0"
+            },
+            {
+               "serverId": "odol-atsmid-cen-09",
+               "lastUpdated": "2014-05-27 09:06:02",
+               "val": "D1S4",
+               "description": "Physical Disk 0:1:1"
+            }
+         ]
+        }
+
+      **Response Example** ::
+
+        {
+         "response": [
+            {
+               "serverId": "odol-atsmid-cen-09",
+               "lastUpdated": "2014-05-27 09:06:02",
+               "val": "D1S4",
+               "description": "Physical Disk 0:1:0"
+            },
+            {
+               "serverId": "odol-atsmid-cen-09",
+               "lastUpdated": "2014-05-27 09:06:02",
+               "val": "D1S4",
+               "description": "Physical Disk 0:1:1"
+            }
+         ]
+        }
 |
