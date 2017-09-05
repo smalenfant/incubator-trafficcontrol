@@ -267,6 +267,7 @@ sub get_profile_config {
 	elsif ( $filename eq "cache.config" ) { $file_contents = $self->profile_cache_dot_config( $profile_obj, $filename ); }
 	elsif ( $filename eq "drop_qstring.config" ) { $file_contents = $self->drop_qstring_dot_config( $profile_obj, $filename ); }
 	elsif ( $filename eq "logs_xml.config" ) { $file_contents = $self->logs_xml_dot_config( $profile_obj, $filename ); }
+	elsif ( $filename eq "logging.config" ) { $file_contents = $self->logging_dot_config( $profile_obj, $filename ); }
 	elsif ( $filename eq "plugin.config" ) { $file_contents = $self->generic_profile_config( $profile_obj, $filename ); }
 	elsif ( $filename eq "records.config" ) { $file_contents = $self->generic_profile_config( $profile_obj, $filename ); }
 	elsif ( $filename eq "storage.config" ) { $file_contents = $self->storage_dot_config( $profile_obj, $filename ); }
@@ -322,6 +323,7 @@ sub get_scope {
 	elsif ( $fname eq "cache.config" )                         { $scope = 'profiles' }
 	elsif ( $fname eq "drop_qstring.config" )                  { $scope = 'profiles' }
 	elsif ( $fname eq "logs_xml.config" )                      { $scope = 'profiles' }
+	elsif ( $fname eq "logging.config" )                       { $scope = 'profiles' }
 	elsif ( $fname eq "plugin.config" )                        { $scope = 'profiles' }
 	elsif ( $fname eq "records.config" )                       { $scope = 'profiles' }
 	elsif ( $fname eq "storage.config" )                       { $scope = 'profiles' }
@@ -1352,6 +1354,37 @@ sub drop_qstring_dot_config {
 
 	return $text;
 }
+
+sub logging_dot_config {
+  my $self        = shift;
+  my $profile_obj = shift;
+  my $filename    = shift;
+
+  my $text = $self->header_comment( $profile_obj->name );
+  my $data = $self->profile_param_data( $profile_obj->id, "logging.config" );
+  my $log_format_name                 = $data->{"LogFormat.Name"}               || "";
+  my $log_object_filename             = $data->{"LogObject.Filename"}           || "";
+  my $log_object_format               = $data->{"LogObject.Format"}             || "";
+  my $log_object_rolling_enabled      = $data->{"LogObject.RollingEnabled"}     || "";
+  my $log_object_rolling_interval_sec = $data->{"LogObject.RollingIntervalSec"} || "";
+  my $log_object_rolling_offset_hr    = $data->{"LogObject.RollingOffsetHr"}    || "";
+  my $log_object_rolling_size_mb      = $data->{"LogObject.RollingSizeMb"}      || "";
+  my $format                          = $data->{"LogFormat.Format"};
+
+  $text .= "$log_format_name = format {\n";
+  $text .= "      Format = '$format'\n";
+  $text .= "}\n";
+  $text .= "\n";
+  $text .= "log.ascii {\n";
+  $text .= "  Filename = \'$log_object_filename\',\n";
+  $text .= "  Format = $log_format_name,\n";
+  $text .= "  RollingEnabled = $log_object_rolling_enabled,\n";
+  $text .= "  RollingIntervalSec = $log_object_rolling_interval_sec,\n";
+  $text .= "  RollingOffsetHr = $log_object_rolling_offset_hr,\n";
+  $text .= "  RollingSizeMb = $log_object_rolling_size_mb\n";
+  $text .= "}\n";
+}
+
 
 sub logs_xml_dot_config {
 	my $self        = shift;
