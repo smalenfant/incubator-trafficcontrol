@@ -55,14 +55,14 @@ func (f HttpFetcher) Fetch(id string, url string, host string, format string, po
 	req.Host = host
 	startReq := time.Now()
 	response, err := f.Client.Do(req)
-	reqEnd := time.Now()
-	reqTime := reqEnd.Sub(startReq)
 	defer func() {
 		if response != nil && response.Body != nil {
 			ioutil.ReadAll(response.Body) // TODO determine if necessary
 			response.Body.Close()
 		}
 	}()
+	reqEnd := time.Now()
+	reqTime := reqEnd.Sub(startReq)
 
 	if err == nil && response == nil {
 		err = fmt.Errorf("err nil and response nil")
