@@ -39,5 +39,5 @@ RUN mvn install:install-file -Dfile=/jdnssec-tools-0.12/lib/jdnssec-tools.jar -D
 RUN mvn -P !rpm-build -Dmaven.test.skip=true -DminimumTPS=1 clean package
 
 #FROM tomcat:8.5.30-jre8
-FROM tomcat:6.0.53-jdk7
+FROM andreptb/tomcat:6.0.53-jdk7
 MAINTAINER Steve Malenfant <steve.malenfant@cox.com>
