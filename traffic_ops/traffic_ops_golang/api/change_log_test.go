@@ -32,8 +32,12 @@ import (
 type testIdentifier struct {
 }
 
-func (i *testIdentifier) GetID() int {
-	return 1
+func (i testIdentifier) GetKeyFieldsInfo() []KeyFieldInfo {
+	return []KeyFieldInfo{{"id", GetIntKey}}
+}
+
+func (i *testIdentifier) GetKeys() (map[string]interface{}, bool) {
+	return map[string]interface{}{"id": 1}, true
 }
 
 func (i *testIdentifier) GetType() string {
@@ -44,7 +48,7 @@ func (i *testIdentifier) GetAuditName() string {
 	return "testerInstance"
 }
 
-func TestInsertChangeLog(t *testing.T) {
+func TestCreateChangeLog(t *testing.T) {
 	mockDB, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -55,11 +59,12 @@ func TestInsertChangeLog(t *testing.T) {
 	defer db.Close()
 	i := testIdentifier{}
 
-	expectedMessage := Created + " " + i.GetType() + ": " + i.GetAuditName() + " id: " + strconv.Itoa(i.GetID())
+	keys, _ := i.GetKeys()
+	expectedMessage := Created + " " + i.GetType() + ": " + i.GetAuditName() + " keys: { id:" + strconv.Itoa(keys["id"].(int)) + " }"
 
 	mock.ExpectExec("INSERT").WithArgs(ApiChange, expectedMessage, 1).WillReturnResult(sqlmock.NewResult(1, 1))
 	user := auth.CurrentUser{ID: 1}
-	err = InsertChangeLog(ApiChange, Created, &i, user, db)
+	err = CreateChangeLog(ApiChange, Created, &i, user, db)
 	if err != nil {
 		t.Fatal(err)
 	}

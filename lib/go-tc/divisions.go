@@ -24,7 +24,13 @@ type DivisionsResponse struct {
 }
 
 type Division struct {
-	ID          int      `json:"id" db:"id"`
-	LastUpdated Time `json:"lastUpdated" db:"last_updated"`
-	Name        string   `json:"name" db:"name"`
+	ID          int       `json:"id" db:"id"`
+	LastUpdated TimeNoMod `json:"lastUpdated" db:"last_updated"`
+	Name        string    `json:"name" db:"name"`
+}
+
+type DivisionNullable struct {
+	ID          *int       `json:"id" db:"id"`
+	LastUpdated *TimeNoMod `json:"lastUpdated" db:"last_updated"`
+	Name        *string    `json:"name" db:"name"`
 }

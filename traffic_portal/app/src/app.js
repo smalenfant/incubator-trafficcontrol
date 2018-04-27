@@ -59,6 +59,8 @@ var trafficPortal = angular.module('trafficPortal', [
         require('./modules/private/cacheGroups/staticDnsEntries').name,
         require('./modules/private/cacheChecks').name,
         require('./modules/private/cacheStats').name,
+        require('./modules/private/capabilities').name,
+        require('./modules/private/capabilities/list').name,
         require('./modules/private/cdns').name,
         require('./modules/private/cdns/config').name,
         require('./modules/private/cdns/deliveryServices').name,
@@ -80,6 +82,11 @@ var trafficPortal = angular.module('trafficPortal', [
         require('./modules/private/changeLogs/list').name,
         require('./modules/private/dashboard').name,
         require('./modules/private/dashboard/view').name,
+        require('./modules/private/deliveryServiceRequests').name,
+        require('./modules/private/deliveryServiceRequests/compare').name,
+        require('./modules/private/deliveryServiceRequests/comments').name,
+        require('./modules/private/deliveryServiceRequests/edit').name,
+        require('./modules/private/deliveryServiceRequests/list').name,
         require('./modules/private/deliveryServices').name,
         require('./modules/private/deliveryServices/clone').name,
         require('./modules/private/deliveryServices/compare').name,
@@ -138,6 +145,8 @@ var trafficPortal = angular.module('trafficPortal', [
         require('./modules/private/regions/list').name,
         require('./modules/private/regions/physLocations').name,
         require('./modules/private/regions/new').name,
+        require('./modules/private/roles').name,
+        require('./modules/private/roles/list').name,
         require('./modules/private/servers').name,
         require('./modules/private/servers/configFiles').name,
         require('./modules/private/servers/deliveryServices').name,
@@ -183,6 +192,7 @@ var trafficPortal = angular.module('trafficPortal', [
         require('./common/modules/dialog/confirm').name,
         require('./common/modules/dialog/confirm/enter').name,
         require('./common/modules/dialog/delete').name,
+        require('./common/modules/dialog/deliveryServiceRequest').name,
         require('./common/modules/dialog/federationResolver').name,
         require('./common/modules/dialog/import').name,
         require('./common/modules/dialog/input').name,
@@ -190,6 +200,7 @@ var trafficPortal = angular.module('trafficPortal', [
         require('./common/modules/dialog/select').name,
         require('./common/modules/dialog/select/status').name,
         require('./common/modules/dialog/text').name,
+        require('./common/modules/dialog/textarea').name,
         require('./common/modules/header').name,
         require('./common/modules/message').name,
         require('./common/modules/navigation').name,
@@ -265,6 +276,7 @@ var trafficPortal = angular.module('trafficPortal', [
         require('./common/modules/table/cacheGroupParameters').name,
         require('./common/modules/table/cacheGroupServers').name,
         require('./common/modules/table/cacheGroupStaticDnsEntries').name,
+        require('./common/modules/table/capabilities').name,
         require('./common/modules/table/changeLogs').name,
         require('./common/modules/table/asns').name,
         require('./common/modules/table/cdns').name,
@@ -277,6 +289,8 @@ var trafficPortal = angular.module('trafficPortal', [
         require('./common/modules/table/deliveryServices').name,
         require('./common/modules/table/deliveryServiceJobs').name,
         require('./common/modules/table/deliveryServiceRegexes').name,
+        require('./common/modules/table/deliveryServiceRequests').name,
+        require('./common/modules/table/deliveryServiceRequestComments').name,
         require('./common/modules/table/deliveryServiceServers').name,
         require('./common/modules/table/deliveryServiceStaticDnsEntries').name,
         require('./common/modules/table/deliveryServiceTargets').name,
@@ -295,6 +309,7 @@ var trafficPortal = angular.module('trafficPortal', [
         require('./common/modules/table/profiles').name,
         require('./common/modules/table/regions').name,
         require('./common/modules/table/regionPhysLocations').name,
+        require('./common/modules/table/roles').name,
         require('./common/modules/table/servers').name,
         require('./common/modules/table/serverConfigFiles').name,
         require('./common/modules/table/serverDeliveryServices').name,
@@ -404,7 +419,11 @@ trafficPortal.factory('authInterceptor', function ($rootScope, $q, $window, $loc
             } else if (rejection.status.toString().match(/^5\d[01356789]$/)) {
                 // matches 5xx EXCEPT for 502's and 504's which indicate a timeout and will be handled by each service call accordingly
                 $timeout(function () {
-                    messageModel.setMessages([ { level: 'error', text: rejection.status.toString() + ': ' + rejection.statusText } ], false);
+                    if (alerts && alerts.length > 0) {
+                            messageModel.setMessages(alerts, false);
+                    } else {
+                            messageModel.setMessages([ { level: 'error', text: rejection.status.toString() + ': ' + rejection.statusText } ], false);
+                    }
                 }, 200);
             }
 

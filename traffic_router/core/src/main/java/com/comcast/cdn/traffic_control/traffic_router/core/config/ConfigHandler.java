@@ -208,6 +208,7 @@ public class ConfigHandler {
 				federationsWatcher.configure(config);
 				steeringWatcher.configure(config);
 				trafficRouterManager.setCacheRegister(cacheRegister);
+				trafficRouterManager.getNameServer().setEcsEnable(JsonUtils.optBoolean(config, "ecsEnable", false));
 				trafficRouterManager.getTrafficRouter().setRequestHeaders(parseRequestHeaders(config.get("requestHeaders")));
 				trafficRouterManager.getTrafficRouter().configurationChanged();
 
@@ -352,12 +353,12 @@ public class ConfigHandler {
 							if (dso != null && dso.size() > 0) {
 								int i = 0;
 								for (final JsonNode nameNode : dso) {
-									final String name = nameNode.asText().toLowerCase();
+									final String name = nameNode.asText();
 									if (i == 0) {
 										references.add(new DeliveryServiceReference(ds, name));
 									}
 
-									final String tld = JsonUtils.optString(cacheRegister.getConfig(), "domain_name").toLowerCase();
+									final String tld = JsonUtils.optString(cacheRegister.getConfig(), "domain_name");
 
 									if (name.endsWith(tld)) {
 										final String reName = name.replaceAll("^.*?\\.", "");

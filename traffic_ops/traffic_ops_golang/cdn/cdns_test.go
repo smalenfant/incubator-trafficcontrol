@@ -20,10 +20,15 @@ package cdn
  */
 
 import (
+	"errors"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/apache/incubator-trafficcontrol/lib/go-tc"
+	"github.com/apache/incubator-trafficcontrol/lib/go-tc/v13"
+	"github.com/apache/incubator-trafficcontrol/traffic_ops/traffic_ops_golang/api"
 	"github.com/apache/incubator-trafficcontrol/traffic_ops/traffic_ops_golang/auth"
 	"github.com/apache/incubator-trafficcontrol/traffic_ops/traffic_ops_golang/test"
 	"github.com/jmoiron/sqlx"
@@ -31,14 +36,14 @@ import (
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
 
-func getTestCDNs() []tc.CDN {
-	cdns := []tc.CDN{}
-	testCDN := tc.CDN{
+func getTestCDNs() []v13.CDN {
+	cdns := []v13.CDN{}
+	testCDN := v13.CDN{
 		DNSSECEnabled: false,
 		DomainName:    "domainName",
 		ID:            1,
 		Name:          "cdn1",
-		LastUpdated:   tc.Time{Time: time.Now()},
+		LastUpdated:   tc.TimeNoMod{Time: time.Now()},
 	}
 	cdns = append(cdns, testCDN)
 
@@ -63,11 +68,9 @@ func TestReadCDNs(t *testing.T) {
 	refType := GetRefType()
 
 	testCDNs := getTestCDNs()
-	cols := test.ColsFromStructByTag("db", tc.CDN{})
+	cols := test.ColsFromStructByTag("db", v13.CDN{})
 	rows := sqlmock.NewRows(cols)
 
-	//TODO: drichardson - build helper to add these Rows from the struct values
-	//                    or by CSV if types get in the way
 	for _, ts := range testCDNs {
 		rows = rows.AddRow(
 			ts.DNSSECEnabled,
@@ -88,4 +91,67 @@ func TestReadCDNs(t *testing.T) {
 	if len(servers) != 2 {
 		t.Errorf("cdn.Read expected: len(servers) == 2, actual: %v", len(servers))
 	}
+}
+
+func TestFuncs(t *testing.T) {
+	if strings.Index(selectQuery(), "SELECT") != 0 {
+		t.Errorf("expected selectQuery to start with SELECT")
+	}
+	if strings.Index(insertQuery(), "INSERT") != 0 {
+		t.Errorf("expected insertQuery to start with INSERT")
+	}
+	if strings.Index(updateQuery(), "UPDATE") != 0 {
+		t.Errorf("expected updateQuery to start with UPDATE")
+	}
+	if strings.Index(deleteQuery(), "DELETE") != 0 {
+		t.Errorf("expected deleteQuery to start with DELETE")
+	}
+
+}
+func TestInterfaces(t *testing.T) {
+	var i interface{}
+	i = &TOCDN{}
+
+	if _, ok := i.(api.Creator); !ok {
+		t.Errorf("cdn must be creator")
+	}
+	if _, ok := i.(api.Reader); !ok {
+		t.Errorf("cdn must be reader")
+	}
+	if _, ok := i.(api.Updater); !ok {
+		t.Errorf("cdn must be updater")
+	}
+	if _, ok := i.(api.Deleter); !ok {
+		t.Errorf("cdn must be deleter")
+	}
+	if _, ok := i.(api.Identifier); !ok {
+		t.Errorf("cdn must be Identifier")
+	}
+}
+
+func TestValidate(t *testing.T) {
+	// invalid name, empty domainname
+	n := "not_a_valid_cdn"
+	c := TOCDN{Name: &n}
+	errs := test.SortErrors(c.Validate(nil))
+
+	expectedErrs := []error{
+		errors.New(`'domainName' cannot be blank`),
+		errors.New(`'name' invalid characters found - Use alphanumeric . or - .`),
+	}
+
+	if !reflect.DeepEqual(expectedErrs, errs) {
+		t.Errorf("expected %s, got %s", expectedErrs, errs)
+	}
+
+	//  name,  domainname both valid
+	n = "This.is.2.a-Valid---CDNNAME."
+	d := `awesome-cdn.example.net`
+	c = TOCDN{Name: &n, DomainName: &d}
+	expectedErrs = []error{}
+	errs = c.Validate(nil)
+	if !reflect.DeepEqual(expectedErrs, errs) {
+		t.Errorf("expected %s, got %s", expectedErrs, errs)
+	}
+
 }

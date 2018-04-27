@@ -1,18 +1,44 @@
-v2.2.0 [unreleased]
--------------------
+# Changelog
+All notable changes to this project will be documented in this file.
 
-### Upgrading
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-#### Per-DeliveryService Routing Names
-A new Delivery Services feature has been added that might require a few pre-upgrade steps: Per-DeliveryService Routing Names. Before this release, DNS Delivery Services were hardcoded to use the name "edge", i.e. "edge.myds.mycdn.com", and HTTP Delivery Services use the name "tr" (or previously "ccr"), i.e. "tr.myds.mycdn.com". As of 2.2, Routing Names will default to "cdn" if left unspecified and can be set to any arbitrary non-dotted hostname.
+## [Unreleased]
+### Added
+- Per-DeliveryService Routing Names: you can now choose a Delivery Service's Routing Name (rather than a hardcoded "tr" or "edge" name). This might require a few pre-upgrade steps detailed [here](http://traffic-control-cdn.readthedocs.io/en/latest/admin/traffic_ops/migration_from_20_to_22.html#per-deliveryservice-routing-names)
+- [Delivery Service Requests](http://traffic-control-cdn.readthedocs.io/en/latest/admin/quick_howto/ds_requests.html#ds-requests): When enabled, delivery service requests are created when ALL users attempt to create, update or delete a delivery service. This allows users with higher level permissions to review delivery service changes for completeness and accuracy before deploying the changes.
+- Traffic Ops Golang Proxy Endpoints
+  - /api/1.3/about `(GET)`
+  - /api/1.3/asns `(GET,POST,PUT,DELETE)`
+  - /api/1.3/cachegroups `(GET,POST,PUT,DELETE)`
+  - /api/1.3/cdns `(GET,POST,PUT,DELETE)`
+  - /api/1.3/cdns/capacity `(GET)`
+  - /api/1.3/cdns/configs `(GET)`
+  - /api/1.3/cdns/dnsseckeys `(GET)`
+  - /api/1.3/cdns/domain `(GET)`
+  - /api/1.3/cdns/monitoring `(GET)`
+  - /api/1.3/cdns/health `(GET)`
+  - /api/1.3/cdns/routing `(GET)`
+  - /api/1.3/deliveryservice_requests `(GET,POST,PUT,DELETE)`
+  - /api/1.3/divisions `(GET,POST,PUT,DELETE)`
+  - /api/1.3/hwinfos `(GET)`
+  - /api/1.3/parameters `(GET,POST,PUT,DELETE)`
+  - /api/1.3/profileparameters `(GET,POST,PUT,DELETE)`
+  - /api/1.3/phys_locations `(GET,POST,PUT,DELETE)`
+  - /api/1.3/ping `(GET)`
+  - /api/1.3/profiles `(GET,POST,PUT,DELETE)`
+  - /api/1.3/regions `(GET,POST,PUT,DELETE)`
+  - /api/1.3/servers `(GET,POST,PUT,DELETE)`
+  - /api/1.3/servers/checks `(GET)`
+  - /api/1.3/servers/details `(GET)`
+  - /api/1.3/servers/status `(GET)`
+  - /api/1.3/servers/totals `(GET)`
+  - /api/1.3/statuses `(GET,POST,PUT,DELETE)`
+  - /api/1.3/system/info `(GET)`
+  - /api/1.3/types `(GET,POST,PUT,DELETE)`
+- Fair Queuing Pacing: Using the FQ Pacing Rate parameter in Delivery Services allows operators to limit the rate of individual sessions to the edge cache. This feature requires a Trafficserver RPM containing the fq_pacing experimental plugin AND setting 'fq' as the default Linux qdisc in sysctl. 
 
-Pre-2.2 the HTTP Routing Name is configurable via the `http.routing.name` option in in the Traffic Router http.properties config file. If your CDN uses that option to change the name from "tr" to something else, then you will need to perform the following steps for *each* CDN affected:
-1. In Traffic Ops, create the following profile parameter (double-check for typos, trailing spaces, etc):
+### Changed
+- Reformatted this CHANGELOG file to the keep-a-changelog format
 
-   **name:** upgrade_http_routing_name  
-   **config file:** temp  
-   **value:** whatever value is used for the affected CDN's http.routing.name
-
-2. Add this parameter to a **single** profile in the affected CDN
-
-With those profile parameters in place Traffic Ops can be safely upgraded to 2.2. Before taking a post-upgrade snapshot, make sure to check your Delivery Service example URLs for unexpected Routing Name changes. Once Traffic Ops has been upgraded to 2.2 and a post-upgrade snapshot has been taken, your Traffic Routers can be upgraded to 2.2 (Traffic Routers must be upgraded *after* Traffic Ops so that they can work with custom per-DeliveryService Routing Names).
+[Unreleased]: https://github.com/apache/incubator-trafficcontrol/compare/RELEASE-2.1.0...HEAD

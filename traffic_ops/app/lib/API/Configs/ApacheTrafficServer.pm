@@ -98,6 +98,37 @@ sub get_config_metadata {
 				$config_file_obj->{ $param->config_file }->{'url'} = $param->value;
 			}
 		}
+
+		# Synthesize file entries for uri_signing delivery services.
+		if ( defined $config_file_obj->{'remap.config'} && defined $config_file_obj->{'remap.config'}->{'location'} ) {
+			# Use the location of the remap.config for these files.
+			my $config_location = $config_file_obj->{'remap.config'}->{'location'};
+
+			# Query the xml_ids of all the delivery services to which this server is assigned
+			# that use uri_signing.
+			my $rs_uri_signing = $self->db->resultset('Deliveryservice')->search(
+				{
+					'server.host_name' => $host_name,
+					'me.signing_algorithm' => 'uri_signing'
+				},
+				{
+					join => {'deliveryservice_servers' => 'server'},
+					columns => ['me.xml_id']
+				}
+			);
+
+			while (my $us = $rs_uri_signing->next) {
+				# If there's already a parameter for it, don't clobber it. The user
+				# may wish to override the location.
+
+				my $cfg_name = 'uri_signing_'.$us->xml_id.'.config';
+				if (! defined $config_file_obj->{$cfg_name}) {
+					$config_file_obj->{$cfg_name}->{'fnameOnDisk'} = $cfg_name;
+					$config_file_obj->{$cfg_name}->{'location'} = $config_location;
+				}
+			}
+		}
+
 	}
 
 
@@ -505,6 +536,7 @@ sub delivery_service_data_by_profile {
 		deliveryservice.protocol,
 		deliveryservice.ssl_key_version,
 		deliveryservice.range_request_handling,
+		deliveryservice.fq_pacing_rate,
 		deliveryservice.edge_header_rewrite,
 		deliveryservice.mid_header_rewrite,
 		deliveryservice.regex_remap,
@@ -550,6 +582,7 @@ sub delivery_service_data_by_profile {
 	my $deliveryservice_protocol;
 	my $deliveryservice_ssl_key_version;
 	my $deliveryservice_range_request_handling;
+	my $deliveryservice_fq_pacing_rate;
 	my $deliveryservice_edge_header_rewrite;
 	my $deliveryservice_mid_header_rewrite;
 	my $deliveryservice_regex_remap;
@@ -575,6 +608,7 @@ sub delivery_service_data_by_profile {
 		\$deliveryservice_protocol,
 		\$deliveryservice_ssl_key_version,
 		\$deliveryservice_range_request_handling,
+		\$deliveryservice_fq_pacing_rate,
 		\$deliveryservice_edge_header_rewrite,
 		\$deliveryservice_mid_header_rewrite,
 		\$deliveryservice_regex_remap,
@@ -604,6 +638,7 @@ sub delivery_service_data_by_profile {
 					"protocol" => $deliveryservice_protocol,
 					"ssl_key_version" => $deliveryservice_ssl_key_version,
 					"range_request_handling" => $deliveryservice_range_request_handling,
+					"fq_pacing_rate" => $deliveryservice_fq_pacing_rate,
 					"edge_header_rewrite" => $deliveryservice_edge_header_rewrite,
 					"mid_header_rewrite" => $deliveryservice_mid_header_rewrite,
 					"regex_remap" => $deliveryservice_regex_remap,
@@ -644,6 +679,7 @@ sub profile_ds_data {
 		my $regex_remap                 = $row->{'regex_remap'};
 		my $protocol                    = $row->{'protocol'};
 		my $range_request_handling      = $row->{'range_request_handling'};
+		my $fq_pacing_rate              = $row->{'fq_pacing_rate'};
 		my $origin_shield               = $row->{'origin_shield'};
 		my $cacheurl                    = $row->{'cacheurl'};
 		my $remap_text                  = $row->{'remap_text'};
@@ -713,6 +749,7 @@ sub profile_ds_data {
 		$dsinfo->{dslist}->[$j]->{"mid_header_rewrite"}          = $mid_header_rewrite;
 		$dsinfo->{dslist}->[$j]->{"regex_remap"}                 = $regex_remap;
 		$dsinfo->{dslist}->[$j]->{"range_request_handling"}      = $range_request_handling;
+		$dsinfo->{dslist}->[$j]->{"fq_pacing_rate"}              = $fq_pacing_rate;
 		$dsinfo->{dslist}->[$j]->{"origin_shield"}               = $origin_shield;
 		$dsinfo->{dslist}->[$j]->{"cacheurl"}                    = $cacheurl;
 		$dsinfo->{dslist}->[$j]->{"remap_text"}                  = $remap_text;
@@ -768,6 +805,7 @@ sub cdn_ds_data {
 		my $regex_remap                 = $row->regex_remap;
 		my $protocol                    = $row->protocol;
 		my $range_request_handling      = $row->range_request_handling;
+		my $fq_pacing_rate              = $row->fq_pacing_rate;
 		my $origin_shield               = $row->origin_shield;
 		my $cacheurl                    = $row->cacheurl;
 		my $remap_text                  = $row->remap_text;
@@ -837,6 +875,7 @@ sub cdn_ds_data {
 		$dsinfo->{dslist}->[$j]->{"mid_header_rewrite"}          = $mid_header_rewrite;
 		$dsinfo->{dslist}->[$j]->{"regex_remap"}                 = $regex_remap;
 		$dsinfo->{dslist}->[$j]->{"range_request_handling"}      = $range_request_handling;
+		$dsinfo->{dslist}->[$j]->{"fq_pacing_rate"}              = $fq_pacing_rate;
 		$dsinfo->{dslist}->[$j]->{"origin_shield"}               = $origin_shield;
 		$dsinfo->{dslist}->[$j]->{"cacheurl"}                    = $cacheurl;
 		$dsinfo->{dslist}->[$j]->{"remap_text"}                  = $remap_text;
@@ -902,6 +941,7 @@ sub ds_data {
 		my $regex_remap                 = $dsinfo->regex_remap;
 		my $protocol                    = $dsinfo->protocol;
 		my $range_request_handling      = $dsinfo->range_request_handling;
+		my $fq_pacing_rate              = $dsinfo->fq_pacing_rate;
 		my $origin_shield               = $dsinfo->origin_shield;
 		my $cacheurl                    = $dsinfo->cacheurl;
 		my $remap_text                  = $dsinfo->remap_text;
@@ -970,6 +1010,7 @@ sub ds_data {
 		$response_obj->{dslist}->[$j]->{"mid_header_rewrite"}          = $mid_header_rewrite;
 		$response_obj->{dslist}->[$j]->{"regex_remap"}                 = $regex_remap;
 		$response_obj->{dslist}->[$j]->{"range_request_handling"}      = $range_request_handling;
+		$response_obj->{dslist}->[$j]->{"fq_pacing_rate"}              = $fq_pacing_rate;
 		$response_obj->{dslist}->[$j]->{"origin_shield"}               = $origin_shield;
 		$response_obj->{dslist}->[$j]->{"cacheurl"}                    = $cacheurl;
 		$response_obj->{dslist}->[$j]->{"remap_text"}                  = $remap_text;
@@ -1138,6 +1179,7 @@ sub remap_ds_data {
 			my $regex_remap                 = $dsinfo->regex_remap;
 			my $protocol                    = $dsinfo->protocol;
 			my $range_request_handling      = $dsinfo->range_request_handling;
+			my $fq_pacing_rate              = $dsinfo->fq_pacing_rate;
 			my $cacheurl                    = $dsinfo->cacheurl;
 			my $remap_text                  = $dsinfo->remap_text;
 
@@ -1201,6 +1243,7 @@ sub remap_ds_data {
 			$response_obj->{dslist}->[$j]->{"edge_header_rewrite"}         = $edge_header_rewrite;
 			$response_obj->{dslist}->[$j]->{"regex_remap"}                 = $regex_remap;
 			$response_obj->{dslist}->[$j]->{"range_request_handling"}      = $range_request_handling;
+			$response_obj->{dslist}->[$j]->{"fq_pacing_rate"}              = $fq_pacing_rate;
 			$response_obj->{dslist}->[$j]->{"cacheurl"}                    = $cacheurl;
 			$response_obj->{dslist}->[$j]->{"remap_text"}                  = $remap_text;
 
@@ -1890,7 +1933,15 @@ sub server_cache_dot_config {
 		if ( $ds->{type} eq "HTTP_NO_CACHE" ) {
 			my $org_fqdn = $ds->{org};
 			$org_fqdn =~ s/https?:\/\///;
-			$text .= "dest_domain=" . $org_fqdn . " scheme=http action=never-cache\n";
+			$org_fqdn =~ m/(.*?):(\d+).*/;
+			my $org_port = $2;
+
+			if (defined($org_port)) {
+				$org_fqdn = $1;
+				$text .= "dest_domain=" . $org_fqdn . " port=" . $org_port . " scheme=http action=never-cache\n";
+			} else {
+				$text .= "dest_domain=" . $org_fqdn . " scheme=http action=never-cache\n";
+			}
 		}
 	}
 
@@ -1918,7 +1969,15 @@ sub profile_cache_dot_config {
 		if ( $ds->{type} eq "HTTP_NO_CACHE" ) {
 			my $org_fqdn = $ds->{org};
 			$org_fqdn =~ s/https?:\/\///;
-			$text .= "dest_domain=" . $org_fqdn . " scheme=http action=never-cache\n";
+			$org_fqdn =~ m/(.*?):(\d+).*/;
+			my $org_port = $2;
+			
+			if (defined($org_port)) {
+				$org_fqdn = $1;
+				$text .= "dest_domain=" . $org_fqdn . " port=" . $org_port . " scheme=http action=never-cache\n";
+			} else {
+				$text .= "dest_domain=" . $org_fqdn . " scheme=http action=never-cache\n";
+			}
 		}
 	}
 
@@ -2178,9 +2237,8 @@ sub cachegroup_profiles {
 		if ( $row->type->name eq 'ORG' ) {
 			my $rs_ds = $self->db->resultset('DeliveryserviceServer')->search( { server => $row->id }, { prefetch => ['deliveryservice'] } );
 			while ( my $ds_row = $rs_ds->next ) {
-				my $ds_domain = $ds_row->deliveryservice->org_server_fqdn;
-				$ds_domain =~ s/https?:\/\/(.*)/$1/;
-				push( @{ $deliveryservices->{$ds_domain} }, $row );
+				my $org_uri = URI->new( $ds_row->deliveryservice->org_server_fqdn );
+				push( @{ $deliveryservices->{ $org_uri->host } }, $row );
 			}
 		}
 		else {
@@ -2346,7 +2404,7 @@ sub parent_dot_config { #fix qstring - should be ignore for quika
 					@ranked_parents = sort by_parent_rank @{ $parent_info->{ $org_uri->host } };
 				}
 				else {
-					$self->app->log->debug( "BUG: Did not match an origin: " . $org_uri );
+					$self->app->log->warn( "BUG: Did not match a multi-site origin: " . $org_uri );
 				}
 
 				my @parent_info;
@@ -2465,40 +2523,43 @@ sub parent_dot_config { #fix qstring - should be ignore for quika
 		if ( !defined($data) ) {
 			$data = $self->parent_ds_data($server_obj);
 		}
-		foreach my $ds ( sort @{ $data->{dslist} } ) {
-			my $text;
-			my $org = $ds->{org};
-			next if !defined $org || $org eq "";
-			next if $done{$org};
-			my $org_uri = URI->new($org);
-			if ( $ds->{type} eq "HTTP_NO_CACHE" || $ds->{type} eq "HTTP_LIVE" || $ds->{type} eq "DNS_LIVE" ) {
-				$text .= "dest_domain=" . $org_uri->host . " port=" . $org_uri->port . " go_direct=true\n";
-			}
-			else {
-				# check for profile psel.qstring_handling.  If this parameter is assigned to the server profile,
-				# then edges will use the qstring handling value specified in the parameter for all profiles.
 
-				# If there is no defined parameter in the profile, then check the delivery service profile.
-				# If psel.qstring_handling exists in the DS profile, then we use that value for the specified DS only.
-				# This is used only if not overridden by a server profile qstring handling parameter.
-				my $ds_qsh = $qsh;
-				if (!defined($qsh)) {
-					$ds_qsh = $ds->{'param'}->{'parent.config'}->{'psel.qstring_handling'};
+		if (defined($data->{dslist})) {
+			foreach my $ds ( sort @{ $data->{dslist} } ) {
+				my $text;
+				my $org = $ds->{org};
+				next if !defined $org || $org eq "";
+				next if $done{$org};
+				my $org_uri = URI->new($org);
+				if ( $ds->{type} eq "HTTP_NO_CACHE" || $ds->{type} eq "HTTP_LIVE" || $ds->{type} eq "DNS_LIVE" ) {
+					$text .= "dest_domain=" . $org_uri->host . " port=" . $org_uri->port . " go_direct=true\n";
 				}
-				my $parent_qstring = defined($ds_qsh) ? $ds_qsh : "ignore";
-
-				if ( $ds->{qstring_ignore} == 0 && !defined($ds_qsh) ) {
-					$parent_qstring = "consider";
+				else {
+					# check for profile psel.qstring_handling.  If this parameter is assigned to the server profile,
+					# then edges will use the qstring handling value specified in the parameter for all profiles.
+	
+					# If there is no defined parameter in the profile, then check the delivery service profile.
+					# If psel.qstring_handling exists in the DS profile, then we use that value for the specified DS only.
+					# This is used only if not overridden by a server profile qstring handling parameter.
+					my $ds_qsh = $qsh;
+					if (!defined($qsh)) {
+						$ds_qsh = $ds->{'param'}->{'parent.config'}->{'psel.qstring_handling'};
+					}
+					my $parent_qstring = defined($ds_qsh) ? $ds_qsh : "ignore";
+	
+					if ( $ds->{qstring_ignore} == 0 && !defined($ds_qsh) ) {
+						$parent_qstring = "consider";
+					}
+					$text
+						.= "dest_domain="
+						. $org_uri->host
+						. " port="
+						. $org_uri->port
+						. " $parents $secparents $round_robin $go_direct qstring=$parent_qstring\n";
 				}
-				$text
-					.= "dest_domain="
-					. $org_uri->host
-					. " port="
-					. $org_uri->port
-					. " $parents $secparents $round_robin $go_direct qstring=$parent_qstring\n";
+				push @text_array, $text;
+				$done{$org} = 1;
 			}
-			push @text_array, $text;
-			$done{$org} = 1;
 		}
 
 		my $default_dest_text;
@@ -2682,6 +2743,9 @@ sub build_remap_line {
 	if ( defined( $remap->{remap_text} ) ) {
 		$text .= " " . $remap->{remap_text};
 	}
+	if ( defined( $remap->{fq_pacing_rate} ) && $remap->{fq_pacing_rate} > 0 ) {
+		$text .= " \@plugin=fq_pacing.so \@pparam=--rate=" . $remap->{fq_pacing_rate}; 
+	}	
 	$text .= "\n";
 	return $text;
 }

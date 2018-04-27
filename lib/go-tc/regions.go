@@ -19,14 +19,16 @@ package tc
  * under the License.
  */
 
+// RegionsResponse ...
 type RegionsResponse struct {
 	Response []Region `json:"response"`
 }
 
+// Region ...
 type Region struct {
-	DivisionName string `json:"divisionName" db:"divisionname"`
-	Division     int    `json:"division" db:"division"`
-	ID           int    `json:"id" db:"id"`
-	LastUpdated  Time   `json:"lastUpdated" db:"last_updated"`
-	Name         string `json:"name" db:"name"`
+	DivisionName string    `json:"divisionName"`
+	Division     int       `json:"division" db:"division"`
+	ID           int       `json:"id" db:"id"`
+	LastUpdated  TimeNoMod `json:"lastUpdated" db:"last_updated"`
+	Name         string    `json:"name" db:"name"`
 }

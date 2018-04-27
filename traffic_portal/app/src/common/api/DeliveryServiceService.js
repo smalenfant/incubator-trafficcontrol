@@ -27,41 +27,52 @@ var DeliveryServiceService = function(Restangular, $http, $q, locationUtils, htt
         return Restangular.one("deliveryservices", id).get();
     };
 
-    this.createDeliveryService = function(deliveryService) {
-        return Restangular.service('deliveryservices').post(deliveryService)
+    this.createDeliveryService = function(ds) {
+        var request = $q.defer();
+
+        $http.post(ENV.api['root'] + "deliveryservices", ds)
             .then(
                 function(response) {
-                    messageModel.setMessages([ { level: 'success', text: 'DeliveryService created' } ], true);
-                    locationUtils.navigateToPath('/delivery-services/' + response.id + '?type=' + response.type);
+                    request.resolve(response);
                 },
                 function(fault) {
-                    messageModel.setMessages(fault.data.alerts, false);
+                    request.reject(fault);
                 }
             );
+
+        return request.promise;
     };
 
-    this.updateDeliveryService = function(deliveryService) {
-        return deliveryService.put()
+    this.updateDeliveryService = function(ds) {
+        var request = $q.defer();
+
+        $http.put(ENV.api['root'] + "deliveryservices/" + ds.id, ds)
             .then(
-                function() {
-                    messageModel.setMessages([ { level: 'success', text: 'Delivery service updated' } ], false);
+                function(response) {
+                    request.resolve(response);
                 },
                 function(fault) {
-                    messageModel.setMessages(fault.data.alerts, false);
+                    request.reject(fault);
                 }
             );
+
+        return request.promise;
     };
 
-    this.deleteDeliveryService = function(id) {
-        return Restangular.one("deliveryservices", id).remove()
+    this.deleteDeliveryService = function(ds) {
+        var deferred = $q.defer();
+
+        $http.delete(ENV.api['root'] + "deliveryservices/" + ds.id)
             .then(
-                function() {
-                    messageModel.setMessages([ { level: 'success', text: 'Delivery service deleted' } ], true);
+                function(response) {
+                    deferred.resolve(response);
                 },
                 function(fault) {
-                    messageModel.setMessages(fault.data.alerts, true);
+                    deferred.reject(fault);
                 }
             );
+
+        return deferred.promise;
     };
 
     this.getServerDeliveryServices = function(serverId) {

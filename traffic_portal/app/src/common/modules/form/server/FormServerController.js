@@ -17,7 +17,7 @@
  * under the License.
  */
 
-var FormServerController = function(server, $scope, $location, $state, $uibModal, formUtils, locationUtils, serverUtils, serverService, cacheGroupService, cdnService, physLocationService, profileService, typeService, messageModel) {
+var FormServerController = function(server, $scope, $location, $state, $uibModal, formUtils, locationUtils, serverUtils, serverService, cacheGroupService, cdnService, physLocationService, profileService, typeService, messageModel, propertiesModel) {
 
     var getPhysLocations = function() {
         physLocationService.getPhysLocations()
@@ -61,7 +61,7 @@ var FormServerController = function(server, $scope, $location, $state, $uibModal
             .then(
                 function(result) {
                     messageModel.setMessages(result.data.alerts, false);
-                    refresh();
+                    $scope.refresh();
                 },
 	            function(fault) {
 		            messageModel.setMessages(fault.data.alerts, false);
@@ -69,16 +69,14 @@ var FormServerController = function(server, $scope, $location, $state, $uibModal
             );
     };
     
-    var refresh = function() {
+    $scope.refresh = function() {
         $state.reload(); // reloads all the resolves for the view
     };
-
 
     // supposedly matches IPv4 and IPv6 formats. but actually need one that matches each. todo.
     $scope.validations = {
         ipRegex: new RegExp(/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$|^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$/)
     };
-
 
     $scope.server = server;
 
@@ -91,6 +89,10 @@ var FormServerController = function(server, $scope, $location, $state, $uibModal
 
     $scope.isEdge = serverUtils.isEdge;
 
+    $scope.openCharts = serverUtils.openCharts;
+
+    $scope.showChartsButton = propertiesModel.properties.servers.charts.show;
+
     $scope.onCDNChange = function() {
         $scope.server.profileId = null; // the cdn of the server changed, so we need to blank out the selected server profile (if any)
         getProfiles($scope.server.cdnId); // and get a new list of profiles (for the selected cdn)
@@ -100,7 +102,7 @@ var FormServerController = function(server, $scope, $location, $state, $uibModal
         serverService.queueServerUpdates(server.id)
             .then(
                 function() {
-                    refresh();
+                    $scope.refresh();
                 }
             );
     };
@@ -109,7 +111,7 @@ var FormServerController = function(server, $scope, $location, $state, $uibModal
         serverService.clearServerUpdates(server.id)
             .then(
                 function() {
-                    refresh();
+                    $scope.refresh();
                 }
             );
     };
@@ -160,5 +162,5 @@ var FormServerController = function(server, $scope, $location, $state, $uibModal
 
 };
 
-FormServerController.$inject = ['server', '$scope', '$location', '$state', '$uibModal', 'formUtils', 'locationUtils', 'serverUtils', 'serverService', 'cacheGroupService', 'cdnService', 'physLocationService', 'profileService', 'typeService', 'messageModel'];
+FormServerController.$inject = ['server', '$scope', '$location', '$state', '$uibModal', 'formUtils', 'locationUtils', 'serverUtils', 'serverService', 'cacheGroupService', 'cdnService', 'physLocationService', 'profileService', 'typeService', 'messageModel', 'propertiesModel'];
 module.exports = FormServerController;

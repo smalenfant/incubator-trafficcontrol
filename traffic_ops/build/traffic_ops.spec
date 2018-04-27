@@ -19,6 +19,7 @@
 %define TRAFFIC_OPS_USER trafops
 %define TRAFFIC_OPS_GROUP trafops
 %define TRAFFIC_OPS_LOG_DIR /var/log/traffic_ops
+%define debug_package %{nil}
 
 Summary:          Traffic Ops UI
 Name:             traffic_ops
@@ -103,7 +104,8 @@ Built: %(date) by %{getenv: USER}
       #echo "go getting at $(pwd)" && \
       #go get -d -v && \
       echo "go building at $(pwd)" && \
-      go build -ldflags "-B 0x`git rev-parse HEAD`" \
+      go get -v &&\
+      go build -ldflags "-X main.version=traffic_ops-%{version}-%{release} -B 0x`git rev-parse HEAD`" \
     ) || { echo "Could not build go program at $(pwd): $!"; exit 1; }
 
 %install

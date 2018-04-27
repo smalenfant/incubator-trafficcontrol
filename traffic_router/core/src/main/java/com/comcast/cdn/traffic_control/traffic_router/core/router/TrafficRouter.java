@@ -22,6 +22,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,8 @@ public class TrafficRouter {
 	private final ConsistentHasher consistentHasher = new ConsistentHasher();
 	private SteeringRegistry steeringRegistry;
 
+	private final Map<String, Geolocation> defaultGeolocationsOverride = new HashMap<String, Geolocation>();
+
 	public TrafficRouter(final CacheRegister cr, 
 			final GeolocationService geolocationService, 
 			final GeolocationService geolocationService6, 
@@ -99,6 +102,19 @@ public class TrafficRouter {
 		this.federationRegistry = federationRegistry;
 		this.consistentDNSRouting = JsonUtils.optBoolean(cr.getConfig(), "consistent.dns.routing");
 		this.zoneManager = new ZoneManager(this, statTracker, trafficOpsUtils, trafficRouterManager);
+
+		if (cr.getConfig() != null) {
+			// maxmindDefaultOverride: {countryCode: , lat: , long: }
+			final JsonNode geolocations = cr.getConfig().get("maxmindDefaultOverride");
+			if (geolocations != null) {
+				for (final JsonNode geolocation : geolocations) {
+					final String countryCode = JsonUtils.optString(geolocation, "countryCode");
+					final double lat = JsonUtils.optDouble(geolocation, "lat");
+					final double longitude = JsonUtils.optDouble(geolocation, "long");
+					defaultGeolocationsOverride.put(countryCode, new Geolocation(lat, longitude));
+				}
+			}
+		}
 	}
 
 	public ZoneManager getZoneManager() {
@@ -307,6 +323,10 @@ public class TrafficRouter {
 				track.setResultDetails(ResultDetails.DS_CLIENT_GEO_UNSUPPORTED);
 				return null;
 			}
+		}
+
+		if (clientLocation.isDefaultLocation() && defaultGeolocationsOverride.containsKey(clientLocation.getCountryCode())) {
+			clientLocation = defaultGeolocationsOverride.get(clientLocation.getCountryCode());
 		}
 
 		final List<Cache> caches = getCachesByGeo(deliveryService, clientLocation, track);
@@ -693,13 +713,17 @@ public class TrafficRouter {
 	}
 
 	public Cache consistentHashForCoverageZone(final String ip, final String deliveryServiceId, final String requestPath) {
+		return consistentHashForCoverageZone(ip, deliveryServiceId, requestPath, false);
+	}
+
+	public Cache consistentHashForCoverageZone(final String ip, final String deliveryServiceId, final String requestPath, final boolean useDeep) {
 		final DeliveryService deliveryService = cacheRegister.getDeliveryService(deliveryServiceId);
 		if (deliveryService == null) {
 			LOGGER.error("Failed getting delivery service from cache register for id '" + deliveryServiceId + "'");
 			return null;
 		}
 
-		final CacheLocation coverageZoneCacheLocation = getCoverageZoneCacheLocation(ip, deliveryService);
+		final CacheLocation coverageZoneCacheLocation = getCoverageZoneCacheLocation(ip, deliveryService, useDeep);
 		final List<Cache> caches = selectCachesByCZ(deliveryService, coverageZoneCacheLocation);
 
 		if (caches == null || caches.isEmpty()) {

@@ -121,6 +121,7 @@ sub index {
 				"geoProvider"          => $row->geo_provider,
 				"globalMaxMbps"        => $row->global_max_mbps,
 				"globalMaxTps"         => $row->global_max_tps,
+				"fqPacingRate"         => $row->fq_pacing_rate,
 				"httpBypassFqdn"       => $row->http_bypass_fqdn,
 				"id"                   => $row->id,
 				"infoUrl"              => $row->info_url,
@@ -242,6 +243,7 @@ sub show {
 				"geoProvider"          => $row->geo_provider,
 				"globalMaxMbps"        => $row->global_max_mbps,
 				"globalMaxTps"         => $row->global_max_tps,
+				"fqPacingRate"         => $row->fq_pacing_rate,
 				"httpBypassFqdn"       => $row->http_bypass_fqdn,
 				"id"                   => $row->id,
 				"infoUrl"              => $row->info_url,
@@ -284,6 +286,15 @@ sub show {
 		);
 	}
 	$self->success( \@data );
+}
+
+sub undef_if_empty {
+    my $in = shift;
+    if (defined $in && $in !~ /\S/) {
+        # does not contain any non-blank characters
+        return undef;
+    }
+    return $in;
 }
 
 sub update {
@@ -341,13 +352,14 @@ sub update {
 		dns_bypass_ip6         => $params->{dnsBypassIp6},
 		dns_bypass_ttl         => $params->{dnsBypassTtl},
 		dscp                   => $params->{dscp},
-		edge_header_rewrite    => $params->{edgeHeaderRewrite},
+		edge_header_rewrite    => undef_if_empty($params->{edgeHeaderRewrite}),
 		geolimit_redirect_url  => $params->{geoLimitRedirectURL},
 		geo_limit              => $params->{geoLimit},
 		geo_limit_countries    => sanitize_geo_limit_countries( $params->{geoLimitCountries} ),
 		geo_provider           => $params->{geoProvider},
 		global_max_mbps        => $params->{globalMaxMbps},
 		global_max_tps         => $params->{globalMaxTps},
+		fq_pacing_rate         => $params->{fqPacingRate},
 		http_bypass_fqdn       => $params->{httpBypassFqdn},
 		info_url               => $params->{infoUrl},
 		initial_dispersion     => $params->{initialDispersion},
@@ -357,7 +369,7 @@ sub update {
 		long_desc_1            => $params->{longDesc1},
 		long_desc_2            => $params->{longDesc2},
 		max_dns_answers        => $params->{maxDnsAnswers},
-		mid_header_rewrite     => $params->{midHeaderRewrite},
+		mid_header_rewrite     => undef_if_empty($params->{midHeaderRewrite}),
 		miss_lat               => $params->{missLat},
 		miss_long              => $params->{missLong},
 		multi_site_origin      => $params->{multiSiteOrigin},
@@ -399,10 +411,10 @@ sub update {
 	if ($rs) {
 
 		# create location parameters for header_rewrite*, regex_remap* and cacheurl* config files if necessary
-		&UI::DeliveryService::header_rewrite( $self, $rs->id, $params->{profileId}, $params->{xmlId}, $params->{edgeHeaderRewrite}, "edge" );
-		&UI::DeliveryService::header_rewrite( $self, $rs->id, $params->{profileId}, $params->{xmlId}, $params->{midHeaderRewrite},  "mid" );
-		&UI::DeliveryService::regex_remap( $self, $rs->id, $params->{profileId}, $params->{xmlId}, $params->{regexRemap} );
-		&UI::DeliveryService::cacheurl( $self, $rs->id, $params->{profileId}, $params->{xmlId}, $params->{cacheurl} );
+		&UI::DeliveryService::header_rewrite( $self, $rs->id, $values->{profileId}, $values->{xmlId}, $values->{edgeHeaderRewrite}, "edge" );
+		&UI::DeliveryService::header_rewrite( $self, $rs->id, $values->{profileId}, $values->{xmlId}, $values->{midHeaderRewrite},  "mid" );
+		&UI::DeliveryService::regex_remap( $self, $rs->id, $values->{profileId}, $values->{xmlId}, $values->{regexRemap} );
+		&UI::DeliveryService::cacheurl( $self, $rs->id, $values->{profileId}, $values->{xmlId}, $values->{cacheurl} );
 
 		# build example urls
 		my @example_urls  = ();
@@ -447,6 +459,7 @@ sub update {
 				"geoProvider"              => $rs->geo_provider,
 				"globalMaxMbps"            => $rs->global_max_mbps,
 				"globalMaxTps"             => $rs->global_max_tps,
+				"fqPacingRate"             => $rs->fq_pacing_rate,
 				"httpBypassFqdn"           => $rs->http_bypass_fqdn,
 				"id"                       => $rs->id,
 				"infoUrl"                  => $rs->info_url,
@@ -491,7 +504,7 @@ sub update {
 
 		my $new_hostname = UI::SslKeys::get_hostname($self, $id, $ds);
 		$upd_ssl = 1 if $old_hostname ne $new_hostname;
-		UI::SslKeys::update_sslkey($self, $params->{xmlId}, $new_hostname) if $upd_ssl;
+		UI::SslKeys::update_sslkey($self, $values->{xmlId}, $new_hostname) if $upd_ssl;
 
 		return $self->success( \@response, "Deliveryservice update was successful." );
 	}
@@ -579,6 +592,7 @@ sub safe_update {
 				"geoProvider"              => $rs->geo_provider,
 				"globalMaxMbps"            => $rs->global_max_mbps,
 				"globalMaxTps"             => $rs->global_max_tps,
+				"fqPacingRate"             => $rs->fq_pacing_rate,
 				"httpBypassFqdn"           => $rs->http_bypass_fqdn,
 				"id"                       => $rs->id,
 				"infoUrl"                  => $rs->info_url,
@@ -678,13 +692,14 @@ sub create {
 		dns_bypass_ip6         => $params->{dnsBypassIp6},
 		dns_bypass_ttl         => $params->{dnsBypassTtl},
 		dscp                   => $params->{dscp},
-		edge_header_rewrite    => $params->{edgeHeaderRewrite},
+		edge_header_rewrite    => undef_if_empty($params->{edgeHeaderRewrite}),
 		geolimit_redirect_url  => $params->{geoLimitRedirectURL},
 		geo_limit              => $params->{geoLimit},
 		geo_limit_countries    => sanitize_geo_limit_countries( $params->{geoLimitCountries} ),
 		geo_provider           => $params->{geoProvider},
 		global_max_mbps        => $params->{globalMaxMbps},
 		global_max_tps         => $params->{globalMaxTps},
+		fq_pacing_rate         => $params->{fqPacingRate},
 		http_bypass_fqdn       => $params->{httpBypassFqdn},
 		info_url               => $params->{infoUrl},
 		initial_dispersion     => $params->{initialDispersion},
@@ -694,7 +709,7 @@ sub create {
 		long_desc_1            => $params->{longDesc1},
 		long_desc_2            => $params->{longDesc2},
 		max_dns_answers        => $params->{maxDnsAnswers},
-		mid_header_rewrite     => $params->{midHeaderRewrite},
+		mid_header_rewrite     => undef_if_empty($params->{midHeaderRewrite}),
 		miss_lat               => $params->{missLat},
 		miss_long              => $params->{missLong},
 		multi_site_origin      => $params->{multiSiteOrigin},
@@ -736,19 +751,19 @@ sub create {
 		&log( $self, "Created delivery service [ '" . $insert->xml_id . "' ] with id: " . $insert->id, "APICHANGE" );
 
 		# create location parameters for header_rewrite*, regex_remap* and cacheurl* config files if necessary
-		&UI::DeliveryService::header_rewrite( $self, $insert->id, $params->{profileId}, $params->{xmlId}, $params->{edgeHeaderRewrite}, "edge" );
-		&UI::DeliveryService::header_rewrite( $self, $insert->id, $params->{profileId}, $params->{xmlId}, $params->{midHeaderRewrite},  "mid" );
-		&UI::DeliveryService::regex_remap( $self, $insert->id, $params->{profileId}, $params->{xmlId}, $params->{regexRemap} );
-		&UI::DeliveryService::cacheurl( $self, $insert->id, $params->{profileId}, $params->{xmlId}, $params->{cacheurl} );
+		&UI::DeliveryService::header_rewrite( $self, $insert->id, $values->{id}, $values->{xml_id}, $values->{edge_header_rewrite}, "edge" );
+		&UI::DeliveryService::header_rewrite( $self, $insert->id, $values->{profile_id}, $values->{xml_id}, $values->{mid_header_rewrite},  "mid" );
+		&UI::DeliveryService::regex_remap( $self, $insert->id, $values->{profile_id}, $values->{xml_id}, $values->{regex_remap} );
+		&UI::DeliveryService::cacheurl( $self, $insert->id, $values->{profile_id}, $values->{xml_id}, $values->{cacheurl} );
 
 		# create a default deliveryservice_regex in the format .*\.xml-id\..*
 		$self->create_default_ds_regex( $insert->id, '.*\.' . $insert->xml_id . '\..*' );
 
 		# create dnssec keys if necessary
-		my $cdn = $self->db->resultset('Cdn')->search( { id => $params->{cdnId} } )->single();
+		my $cdn = $self->db->resultset('Cdn')->search( { id => $values->{cdn_id} } )->single();
 		my $dnssec_enabled = $cdn->dnssec_enabled;
 		if ($dnssec_enabled) {
-			&UI::DeliveryService::create_dnssec_keys( $self, $cdn->name, $params->{xmlId}, $insert->id, $cdn->domain_name );
+			&UI::DeliveryService::create_dnssec_keys( $self, $cdn->name, $values->{xml_id}, $insert->id, $cdn->domain_name );
 			&log( $self, "Created delivery service dnssec keys for [ '" . $insert->xml_id . "' ]", "APICHANGE" );
 		}
 
@@ -795,6 +810,7 @@ sub create {
 				"geoProvider"              => $insert->geo_provider,
 				"globalMaxMbps"            => $insert->global_max_mbps,
 				"globalMaxTps"             => $insert->global_max_tps,
+				"fqPacingRate"             => $insert->fq_pacing_rate,
 				"httpBypassFqdn"           => $insert->http_bypass_fqdn,
 				"id"                       => $insert->id,
 				"infoUrl"                  => $insert->info_url,
@@ -987,6 +1003,7 @@ sub get_deliveryservices_by_serverId {
 					"geoProvider"          => $row->geo_provider,
 					"globalMaxMbps"        => $row->global_max_mbps,
 					"globalMaxTps"         => $row->global_max_tps,
+					"fqPacingRate"         => $row->fq_pacing_rate,
 					"httpBypassFqdn"       => $row->http_bypass_fqdn,
 					"id"                   => $row->id,
 					"infoUrl"              => $row->info_url,
@@ -1086,6 +1103,7 @@ sub get_deliveryservices_by_userId {
 					"geoProvider"          => $row->geo_provider,
 					"globalMaxMbps"        => $row->global_max_mbps,
 					"globalMaxTps"         => $row->global_max_tps,
+					"fqPacingRate"         => $row->fq_pacing_rate,    
 					"httpBypassFqdn"       => $row->http_bypass_fqdn,
 					"id"                   => $row->id,
 					"infoUrl"              => $row->info_url,
@@ -1379,7 +1397,7 @@ sub is_deliveryservice_valid {
 
 	my $rules = {
 		fields => [
-			qw/active cacheurl ccrDnsTtl cdnId checkPath deepCachingType displayName dnsBypassCname dnsBypassIp dnsBypassIp6 dnsBypassTtl dscp edgeHeaderRewrite geoLimitRedirectURL geoLimit geoLimitCountries geoProvider globalMaxMbps globalMaxTps httpBypassFqdn infoUrl initialDispersion ipv6RoutingEnabled logsEnabled longDesc longDesc1 longDesc2 maxDnsAnswers midHeaderRewrite missLat missLong multiSiteOrigin multiSiteOriginAlgorithm orgServerFqdn originShield profileId protocol qstringIgnore rangeRequestHandling regexRemap regionalGeoBlocking remapText routingName signed signingAlgorithm sslKeyVersion tenantId trRequestHeaders trResponseHeaders typeId xmlId/
+			qw/active cacheurl ccrDnsTtl cdnId checkPath deepCachingType displayName dnsBypassCname dnsBypassIp dnsBypassIp6 dnsBypassTtl dscp edgeHeaderRewrite fqPacingRate geoLimitRedirectURL geoLimit geoLimitCountries geoProvider globalMaxMbps globalMaxTps httpBypassFqdn infoUrl initialDispersion ipv6RoutingEnabled logsEnabled longDesc longDesc1 longDesc2 maxDnsAnswers midHeaderRewrite missLat missLong multiSiteOrigin multiSiteOriginAlgorithm orgServerFqdn originShield profileId protocol qstringIgnore rangeRequestHandling regexRemap regionalGeoBlocking remapText routingName signed signingAlgorithm sslKeyVersion tenantId trRequestHeaders trResponseHeaders typeId xmlId/
 		],
 
 		# validation checks to perform for ALL delivery services
@@ -1395,6 +1413,7 @@ sub is_deliveryservice_valid {
 			geoProvider			=> [ is_required("is required"), \&is_valid_int_or_undef ],
 			globalMaxMbps			=> [ \&is_valid_int_or_undef ],
 			globalMaxTps			=> [ \&is_valid_int_or_undef ],
+			fqPacingRate                    => [ \&is_valid_int_or_undef ],
 			initialDispersion		=> [ \&is_valid_int_or_undef ],
 			logsEnabled			=> [ is_required("is required") ],
 			maxDnsAnswers			=> [ \&is_valid_int_or_undef ],
@@ -1561,6 +1580,16 @@ sub is_valid_org_server_fqdn {
 
 	if ( !( $value =~ /^(https?:\/\/)/ ) ) {
 		return "invalid. Must start with http:// or https://.";
+	}
+
+	$value =~ s{^https?://}{};
+	$value =~ s/:(.*)$//;
+	my $port = defined($1) ? $1 : 80;
+	if ( !&is_hostname($value) ) {
+		return "invalid. '" . $value . "' is not a valid org server hostname (rfc1123)";
+	}
+	if ( $port !~ /\d*/ || $port < 1 || 65535 < $port ) {
+		return "invalid. " . $port . " is not a valid port number";
 	}
 
 	return undef;

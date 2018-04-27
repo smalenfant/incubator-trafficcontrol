@@ -35,17 +35,17 @@ import (
 
 	"github.com/apache/incubator-trafficcontrol/lib/go-log"
 	tc "github.com/apache/incubator-trafficcontrol/lib/go-tc"
+	"github.com/apache/incubator-trafficcontrol/traffic_ops/traffic_ops_golang/about"
 	"github.com/apache/incubator-trafficcontrol/traffic_ops/traffic_ops_golang/auth"
 	"github.com/apache/incubator-trafficcontrol/traffic_ops/traffic_ops_golang/tocookie"
 	"github.com/jmoiron/sqlx"
 )
 
 // ServerName - the server identifier
-const ServerName = "traffic_ops_golang" + "/" + Version
+var ServerName = "traffic_ops_golang" + "/" + about.About.Version
 
 // AuthBase ...
 type AuthBase struct {
-	noAuth                 bool
 	secret                 string
 	getCurrentUserInfoStmt *sqlx.Stmt
 	override               Middleware
@@ -57,13 +57,6 @@ func (a AuthBase) GetWrapper(privLevelRequired int) Middleware {
 		return a.override
 	}
 	return func(handlerFunc http.HandlerFunc) http.HandlerFunc {
-		if a.noAuth {
-			return func(w http.ResponseWriter, r *http.Request) {
-				ctx := r.Context()
-				ctx = context.WithValue(ctx, auth.CurrentUserKey, auth.CurrentUser{UserName: "-", ID: -1, PrivLevel: auth.PrivLevelInvalid})
-				handlerFunc(w, r.WithContext(ctx))
-			}
-		}
 		return func(w http.ResponseWriter, r *http.Request) {
 			// TODO remove, and make username available to wrapLogTime
 			start := time.Now()

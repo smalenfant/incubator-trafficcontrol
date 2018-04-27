@@ -29,29 +29,40 @@ import (
 	"time"
 
 	"github.com/apache/incubator-trafficcontrol/lib/go-log"
+	"github.com/apache/incubator-trafficcontrol/traffic_ops/traffic_ops_golang/about"
+	"github.com/apache/incubator-trafficcontrol/traffic_ops/traffic_ops_golang/config"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-// Version ...
-const Version = "0.1"
+// set the version at build time: `go build -X "main.version=..."`
+var version = "development"
+
+func init() {
+	about.SetAbout(version)
+}
 
 func main() {
+	showVersion := flag.Bool("version", false, "Show version and exit")
 	configFileName := flag.String("cfg", "", "The config file path")
 	dbConfigFileName := flag.String("dbcfg", "", "The db config file path")
 	riakConfigFileName := flag.String("riakcfg", "", "The riak config file path")
 	flag.Parse()
 
+	if *showVersion {
+		fmt.Println(about.About.RPMVersion)
+		os.Exit(0)
+	}
 	if len(os.Args) < 2 {
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	var cfg Config
+	var cfg config.Config
 	var err error
 	var errorToLog error
-	if cfg, err = LoadConfig(*configFileName, *dbConfigFileName, *riakConfigFileName); err != nil {
+	if cfg, err = config.LoadConfig(*configFileName, *dbConfigFileName, *riakConfigFileName); err != nil {
 		if !strings.Contains(err.Error(), "riak conf") {
 			fmt.Println("Error loading config: " + err.Error())
 			return
@@ -120,7 +131,6 @@ func main() {
 		IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
 	}
 
-	log.Debugf("our server struct: %++v \n", server)
 	if err := server.ListenAndServeTLS(cfg.CertPath, cfg.KeyPath); err != nil {
 		log.Errorf("stopping server: %v\n", err)
 		return
