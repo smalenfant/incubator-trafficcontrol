@@ -23,7 +23,7 @@ if [[ -e "/etc/init.d/tomcat" ]]; then
   chkconfig tomcat off
 fi
 
-if
+if [ command -v systemctl >/dev/null ]; then 
   /usr/bin/systemctl list-unit-files traffic_router.service > /dev/null
   [ $? -eq 0 ] && /usr/bin/systemctl stop traffic_router
 fi
