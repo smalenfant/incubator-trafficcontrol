@@ -113,8 +113,17 @@ func (staticDNSEntry TOStaticDNSEntry) Validate() error {
 		addressErr = validation.Validate(staticDNSEntry.Address, validation.Required)
 	}
 
+        var hostErr error
+        switch typeStr {
+	case "*":
+		hostErr = nil
+        default:
+		hostErr = validation.Validate(staticDNSEntry.Host, validation.Required, is.DNSName)
+        }
+     
+
 	errs := validation.Errors{
-		"host":              validation.Validate(staticDNSEntry.Host, validation.Required, is.DNSName),
+		"host":              hostErr,
 		"address":           addressErr,
 		"deliveryserviceId": validation.Validate(staticDNSEntry.DeliveryServiceID, validation.Required),
 		"ttl":               validation.Validate(staticDNSEntry.TTL, validation.Required),
