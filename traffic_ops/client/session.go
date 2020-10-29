@@ -228,9 +228,9 @@ func LoginWithAgent(toURL string, toUser string, toPasswd string, insecure bool,
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+                        Proxy: http.ProxyFromEnvironment,
 		},
 		Jar: jar,
-                Proxy: http.ProxyFromEnvironment,
 	}, useCache)
 
 	remoteAddr, err := to.login()
@@ -286,8 +286,8 @@ func LogoutWithAgent(toURL string, toUser string, toPasswd string, insecure bool
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+                        Proxy: http.ProxyFromEnvironment,
 		},
-                Proxy: http.ProxyFromEnvironment,
 		Jar: jar,
 	}, useCache)
 
@@ -305,8 +305,8 @@ func NewNoAuthSession(toURL string, insecure bool, userAgent string, useCache bo
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+                        Proxy: http.ProxyFromEnvironment,
 		},
-                Proxy: http.ProxyFromEnvironment,
 	}, useCache)
 }
 
