@@ -66,6 +66,7 @@ func Login(url, user, pass string, opts ClientOpts, apiVersions []string) (*TOCl
 		Timeout: opts.RequestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: opts.Insecure},
+			Proxy:           ProxyFromEnvironment,
 		},
 		Jar: jar,
 	}, apiVersions)
@@ -356,6 +357,7 @@ func LoginWithAgent(
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+			Proxy:           ProxyFromEnvironment,
 		},
 		Jar: jar,
 	}, apiVersions)
@@ -404,6 +406,7 @@ func LoginWithToken(
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+			Proxy:           ProxyFromEnvironment,
 		},
 		Jar: jar,
 	}
@@ -451,6 +454,7 @@ func LogoutWithAgent(
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+			Proxy:           ProxyFromEnvironment,
 		},
 		Jar: jar,
 	}, apiVersions)
@@ -476,6 +480,7 @@ func NewNoAuthClient(
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
+			Proxy:           ProxyFromEnvironment,
 		},
 	}, apiVersions)
 }
