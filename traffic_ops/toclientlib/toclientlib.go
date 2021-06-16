@@ -27,8 +27,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/cookiejar"
-	"net/http/httptrace"
 	"net/http/httpproxy"
+	"net/http/httptrace"
 	"strings"
 	"time"
 
