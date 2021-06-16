@@ -31,6 +31,7 @@ import (
 	"net/http/httptrace"
 	"strings"
 	"time"
+	"x/net/http/httpproxy"
 
 	"github.com/apache/trafficcontrol/lib/go-log"
 	"github.com/apache/trafficcontrol/lib/go-tc"
