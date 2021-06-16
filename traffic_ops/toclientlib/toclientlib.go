@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/net/http/httpproxy"
+	//"golang.org/x/net/http/httpproxy"
 	"io/ioutil"
 	"math"
 	"net"
@@ -67,7 +67,7 @@ func Login(url, user, pass string, opts ClientOpts, apiVersions []string) (*TOCl
 		Timeout: opts.RequestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: opts.Insecure},
-			Proxy:           ProxyFromEnvironment,
+			Proxy:           http.ProxyFromEnvironment,
 		},
 		Jar: jar,
 	}, apiVersions)
@@ -358,7 +358,7 @@ func LoginWithAgent(
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
-			Proxy:           ProxyFromEnvironment,
+			Proxy:           http.ProxyFromEnvironment,
 		},
 		Jar: jar,
 	}, apiVersions)
@@ -407,7 +407,7 @@ func LoginWithToken(
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
-			Proxy:           ProxyFromEnvironment,
+			Proxy:           http.ProxyFromEnvironment,
 		},
 		Jar: jar,
 	}
@@ -455,7 +455,7 @@ func LogoutWithAgent(
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
-			Proxy:           ProxyFromEnvironment,
+			Proxy:           http.ProxyFromEnvironment,
 		},
 		Jar: jar,
 	}, apiVersions)
@@ -481,7 +481,7 @@ func NewNoAuthClient(
 		Timeout: requestTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
-			Proxy:           ProxyFromEnvironment,
+			Proxy:           http.ProxyFromEnvironment,
 		},
 	}, apiVersions)
 }
